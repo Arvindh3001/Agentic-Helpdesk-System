@@ -1,65 +1,191 @@
-import Image from "next/image";
+'use client'
+import { useEffect, useState } from 'react'
+import { useAuth } from '@/context/AuthContext'
+import Link from 'next/link'
 
-export default function Home() {
+interface Stats {
+  total: number
+  resolved: number
+  pending: number
+  assigned: number
+  avgResolutionHours: number
+  slaBreaches: number
+  avgRating: number
+  totalFeedback: number
+  byCategory: { name: string; count: number }[]
+  byPriority: { priority: string; count: number }[]
+}
+
+interface Ticket {
+  id: number
+  description: string
+  status: string
+  priority: string
+  createdAt: string
+  slaDeadline: string
+  category: { name: string }
+  customer: { name: string; email: string }
+  assignedTech?: { name: string }
+}
+
+const priorityColors: Record<string, string> = { High: '#ef4444', Medium: '#f59e0b', Low: '#22c55e' }
+const statusColors: Record<string, string> = { Pending: '#f59e0b', Assigned: '#6366f1', Resolved: '#22c55e' }
+
+function PriorityBadge({ priority }: { priority: string }) {
+  return <span className="badge" style={{ background: priorityColors[priority] + '22', color: priorityColors[priority], border: `1px solid ${priorityColors[priority]}44` }}>{priority}</span>
+}
+function StatusBadge({ status }: { status: string }) {
+  return <span className="badge" style={{ background: statusColors[status] + '22', color: statusColors[status], border: `1px solid ${statusColors[status]}44` }}>{status}</span>
+}
+
+function isSlaBreached(deadline: string, status: string) {
+  return status !== 'Resolved' && new Date(deadline) < new Date()
+}
+
+export default function Dashboard() {
+  const { user } = useAuth()
+  const [stats, setStats] = useState<Stats | null>(null)
+  const [tickets, setTickets] = useState<Ticket[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    Promise.all([
+      fetch('/api/analytics').then(r => r.json()),
+      fetch('/api/tickets').then(r => r.json()),
+    ]).then(([s, t]) => {
+      setStats(s)
+      setTickets(Array.isArray(t) ? t.slice(0, 8) : [])
+      setLoading(false)
+    })
+  }, [])
+
+  if (loading) return <div className="page-loading"><div className="spinner"></div></div>
+
+  const greeting = user?.name.split(' ')[0]
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="page">
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">Welcome back, {greeting}! 👋</h1>
+          <p className="page-subtitle">Here&apos;s what&apos;s happening in your helpdesk today.</p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        {(user?.role === 'Customer' || user?.role === 'Admin') && (
+          <Link href="/tickets/new" className="btn btn-primary">
+            ➕ New Ticket
+          </Link>
+        )}
+      </div>
+
+      {/* KPI Cards */}
+      <div className="grid-4">
+        <div className="card stat-card">
+          <div className="stat-icon" style={{ background: 'rgba(99,102,241,0.1)', color: '#6366f1' }}>🎫</div>
+          <div>
+            <p className="stat-title">Total Tickets</p>
+            <p className="stat-value">{stats?.total ?? 0}</p>
+          </div>
         </div>
-      </main>
+        <div className="card stat-card">
+          <div className="stat-icon" style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444' }}>⏳</div>
+          <div>
+            <p className="stat-title">Pending</p>
+            <p className="stat-value" style={{ color: '#ef4444' }}>{stats?.pending ?? 0}</p>
+          </div>
+        </div>
+        <div className="card stat-card">
+          <div className="stat-icon" style={{ background: 'rgba(34,197,94,0.1)', color: '#22c55e' }}>✅</div>
+          <div>
+            <p className="stat-title">Resolved</p>
+            <p className="stat-value" style={{ color: '#22c55e' }}>{stats?.resolved ?? 0}</p>
+          </div>
+        </div>
+        <div className="card stat-card">
+          <div className="stat-icon" style={{ background: 'rgba(245,158,11,0.1)', color: '#f59e0b' }}>🔥</div>
+          <div>
+            <p className="stat-title">SLA Breaches</p>
+            <p className="stat-value" style={{ color: '#f59e0b' }}>{stats?.slaBreaches ?? 0}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Secondary stats */}
+      <div className="grid-3" style={{ marginTop: '24px' }}>
+        <div className="card stat-card">
+          <div className="stat-icon" style={{ background: 'rgba(14,165,233,0.1)', color: '#0ea5e9' }}>⚡</div>
+          <div>
+            <p className="stat-title">Avg Resolution</p>
+            <p className="stat-value" style={{ color: '#0ea5e9' }}>{stats?.avgResolutionHours}h</p>
+          </div>
+        </div>
+        <div className="card stat-card">
+          <div className="stat-icon" style={{ background: 'rgba(99,102,241,0.1)', color: '#6366f1' }}>🔧</div>
+          <div>
+            <p className="stat-title">Assigned</p>
+            <p className="stat-value">{stats?.assigned ?? 0}</p>
+          </div>
+        </div>
+        <div className="card stat-card">
+          <div className="stat-icon" style={{ background: 'rgba(251,191,36,0.1)', color: '#fbbf24' }}>⭐</div>
+          <div>
+            <p className="stat-title">Avg Satisfaction</p>
+            <p className="stat-value" style={{ color: '#fbbf24' }}>{stats?.avgRating ? `${stats.avgRating}/5` : 'N/A'}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Recent tickets table */}
+      <div className="card" style={{ marginTop: '24px' }}>
+        <div className="card-header">
+          <h3>Recent Tickets</h3>
+          <Link href="/tickets" className="btn btn-secondary" style={{ fontSize: '0.85rem', padding: '8px 14px' }}>View All</Link>
+        </div>
+        {tickets.length === 0 ? (
+          <div className="empty-state">
+            <p>🎫</p>
+            <p>No tickets yet. {user?.role === 'Customer' && <Link href="/tickets/new">Submit your first ticket →</Link>}</p>
+          </div>
+        ) : (
+          <div className="table-wrapper">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Description</th>
+                  <th>Category</th>
+                  <th>Priority</th>
+                  <th>Status</th>
+                  <th>SLA</th>
+                  <th>Created</th>
+                </tr>
+              </thead>
+              <tbody>
+                {tickets.map(t => (
+                  <tr key={t.id}>
+                    <td>
+                      <Link href={`/tickets/${t.id}`} className="ticket-id">#{t.id}</Link>
+                    </td>
+                    <td>
+                      <span className="ticket-desc" title={t.description}>{t.description.slice(0, 50)}{t.description.length > 50 ? '…' : ''}</span>
+                    </td>
+                    <td><span className="category-tag">{t.category.name}</span></td>
+                    <td><PriorityBadge priority={t.priority} /></td>
+                    <td><StatusBadge status={t.status} /></td>
+                    <td>
+                      {t.slaDeadline ? (
+                        <span style={{ color: isSlaBreached(t.slaDeadline, t.status) ? '#ef4444' : '#22c55e', fontSize: '0.8rem' }}>
+                          {isSlaBreached(t.slaDeadline, t.status) ? '🔴 Breached' : `🟢 ${new Date(t.slaDeadline).toLocaleDateString()}`}
+                        </span>
+                      ) : '—'}
+                    </td>
+                    <td><span className="date-text">{new Date(t.createdAt).toLocaleDateString()}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
-  );
+  )
 }
