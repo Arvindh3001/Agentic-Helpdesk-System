@@ -33,20 +33,33 @@ export async function POST(req: NextRequest) {
     update: {},
   })
 
+  // Look up seeded categories so we can assign them to technicians
+  const allCategories = await prisma.category.findMany({ orderBy: { id: 'asc' } })
+  const cat1Id = allCategories[0]?.id ?? 1
+  const cat2Id = allCategories[1]?.id ?? 1
+
   const techHash = hashPassword('tech123')
   const tech1 = await prisma.user.upsert({
     where: { email: 'alice@helpdesk.com' },
     create: { name: 'Alice Tech', email: 'alice@helpdesk.com', passwordHash: techHash, role: 'Technician' },
     update: {},
   })
-  await prisma.technicianProfile.upsert({ where: { userId: tech1.id }, create: { userId: tech1.id, isAvailable: true, currentWorkload: 0 }, update: {} })
+  await prisma.technicianProfile.upsert({
+    where: { userId: tech1.id },
+    create: { userId: tech1.id, isAvailable: true, currentWorkload: 0, zone: 'SJT', categoryId: cat1Id },
+    update: {},
+  })
 
   const tech2 = await prisma.user.upsert({
     where: { email: 'bob@helpdesk.com' },
     create: { name: 'Bob Tech', email: 'bob@helpdesk.com', passwordHash: techHash, role: 'Technician' },
     update: {},
   })
-  await prisma.technicianProfile.upsert({ where: { userId: tech2.id }, create: { userId: tech2.id, isAvailable: true, currentWorkload: 0 }, update: {} })
+  await prisma.technicianProfile.upsert({
+    where: { userId: tech2.id },
+    create: { userId: tech2.id, isAvailable: true, currentWorkload: 0, zone: 'TT', categoryId: cat2Id },
+    update: {},
+  })
 
   const custHash = hashPassword('user123')
   await prisma.user.upsert({

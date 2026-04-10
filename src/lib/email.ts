@@ -11,7 +11,7 @@ const transporter = nodemailer.createTransport({
   },
   // Add these options for better Gmail compatibility
   tls: {
-    rejectUnauthorized: false
+    rejectUnauthorized: process.env.NODE_ENV === 'production',
   },
   connectionTimeout: 10000, // 10 seconds
   greetingTimeout: 10000, // 10 seconds

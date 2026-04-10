@@ -12,11 +12,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Email already registered' }, { status: 409 })
   }
   const hashed = hashPassword(password)
+  const resolvedRole = role || 'Customer'
+
+  // TechnicianProfile requires zone + categoryId which are not collected at registration.
+  // The profile is created later by an admin or via the seed route.
   const user = await prisma.user.create({
-    data: { name, email, passwordHash: hashed, role: role || 'Customer' },
+    data: { name, email, passwordHash: hashed, role: resolvedRole },
   })
-  if (user.role === 'Technician') {
-    await prisma.technicianProfile.create({ data: { userId: user.id } })
-  }
+
   return NextResponse.json({ id: user.id, name: user.name, email: user.email, role: user.role })
 }
