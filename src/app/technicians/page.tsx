@@ -18,6 +18,9 @@ interface TechPerformance {
   recentActivity: number
   zone: string
   category: string
+  avgRating: number | null
+  totalFeedback: number
+  lowRatingCount: number
 }
 
 interface TechLocation {
@@ -212,6 +215,7 @@ export default function TechniciansPage() {
                       <th style={{ textAlign: 'center' }}>Resolved</th>
                       <th style={{ textAlign: 'center' }}>Success Rate</th>
                       <th style={{ textAlign: 'center' }}>Avg Time</th>
+                      <th style={{ textAlign: 'center' }}>Rating</th>
                       <th style={{ textAlign: 'center' }}>Weekly</th>
                     </tr>
                   </thead>
@@ -245,6 +249,21 @@ export default function TechniciansPage() {
                         </td>
                         <td style={{ textAlign: 'center', color: getResolutionColor(tech.avgResolutionTime), fontWeight: 600 }}>
                           {tech.avgResolutionTime}h
+                        </td>
+                        <td style={{ textAlign: 'center' }}>
+                          {tech.avgRating != null ? (
+                            <span style={{
+                              fontWeight: 700,
+                              color: tech.avgRating >= 4 ? '#22c55e' : tech.avgRating >= 3 ? '#f59e0b' : '#ef4444',
+                            }}>
+                              {tech.avgRating} ⭐
+                              {tech.lowRatingCount > 0 && (
+                                <span title={`${tech.lowRatingCount} low rating(s)`} style={{ color: '#ef4444', marginLeft: '4px', fontSize: '0.75rem' }}>⚠️</span>
+                              )}
+                            </span>
+                          ) : (
+                            <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>—</span>
+                          )}
                         </td>
                         <td style={{ textAlign: 'center', color: tech.recentActivity > 3 ? '#22c55e' : tech.recentActivity > 1 ? '#f59e0b' : 'var(--text-muted)', fontWeight: 600 }}>
                           {tech.recentActivity}

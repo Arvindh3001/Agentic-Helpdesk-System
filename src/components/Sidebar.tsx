@@ -5,12 +5,13 @@ import { useAuth } from '@/context/AuthContext'
 import { useState } from 'react'
 
 const navItems = [
-  { href: '/',             label: 'Dashboard',    icon: '📊', roles: ['Admin', 'Technician', 'Customer'] },
-  { href: '/tickets',      label: 'Tickets',      icon: '🎫', roles: ['Admin', 'Technician', 'Customer'] },
-  { href: '/knowledge',    label: 'Knowledge',    icon: '📚', roles: ['Admin', 'Technician', 'Customer'] },
-  { href: '/technicians',  label: 'Technicians',  icon: '⚙️', roles: ['Admin'] },
-  { href: '/analytics',    label: 'Analytics',    icon: '📈', roles: ['Admin', 'Technician'] },
-  { href: '/future',       label: 'AI & Future',  icon: '🚀', roles: ['Admin', 'Technician', 'Customer'] },
+  { href: '/',                label: 'Dashboard',   icon: '📊', roles: ['Admin', 'Technician', 'Customer'] },
+  { href: '/tickets',         label: 'Tickets',     icon: '🎫', roles: ['Admin', 'Technician', 'Customer'] },
+  { href: '/knowledge',       label: 'Knowledge',   icon: '📚', roles: ['Admin', 'Technician', 'Customer'] },
+  { href: '/technicians',     label: 'Technicians', icon: '⚙️', roles: ['Admin'] },
+  { href: '/analytics',       label: 'Analytics',   icon: '📈', roles: ['Admin', 'Technician'] },
+  { href: '/admin/feedback',  label: 'Feedback',    icon: '⭐', roles: ['Admin'] },
+  { href: '/future',          label: 'AI & Future', icon: '🚀', roles: ['Admin', 'Technician', 'Customer'] },
 ]
 
 export default function Sidebar() {

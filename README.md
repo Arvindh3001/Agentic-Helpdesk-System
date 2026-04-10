@@ -61,6 +61,15 @@ On first launch, click **"Seed Demo Data"** on the login page, then sign in:
 - Threshold: 55% — shows warning with similarity score
 - User can dismiss and submit anyway (`forceSubmit` flag)
 
+### Module 7 — Feedback & Rating (Admin Dashboard)
+- Dedicated **⭐ Feedback** page in Admin sidebar (`/admin/feedback`)
+- **Overview tab:** rating distribution bar chart, overall avg, satisfaction %, low-rating alert with one-click drill-down
+- **By Technician tab:** every technician ranked by avg rating, mini bar chart per technician, ⚠️ "Needs attention" badge for avg < 3
+- **Comments tab:** all customer comments with star rating, filter by low ratings, linked to ticket and technician
+- New `/api/analytics/feedback` route returns per-technician aggregation + recent feedback list
+- Performance table on Technicians page now shows **Rating** column with low-rating ⚠️ indicator
+- Feedback is only submittable when ticket status = Resolved (enforced in UI + API)
+
 ### Module 8 — Technician GPS Tracking
 - Technicians click **"📍 Share Location"** in the sidebar → browser Geolocation API captures lat/lng
 - Location saved to `TechnicianProfile.latitude / longitude / locationUpdatedAt`
