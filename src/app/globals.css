@@ -496,14 +496,10 @@ input, textarea, select { font-family: var(--font-sans); }
 .empty-state a { color: var(--primary); font-weight: 600; }
 
 /* =========================================================
-   Responsive
+   Responsive — base overrides (Module 9 block below handles full mobile layout)
    ========================================================= */
 @media (max-width: 768px) {
-  .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr; }
-  .sidebar { display: none; }
-  .content-area { padding: 20px 16px; }
   .kb-layout { grid-template-columns: 1fr; }
-  .stats-summary-grid { grid-template-columns: repeat(2, 1fr); }
   .donut-chart { justify-content: center; }
 }
 
@@ -788,6 +784,34 @@ input, textarea, select { font-family: var(--font-sans); }
 .notif-event-icon { font-size: 1.1rem; width: 24px; text-align: center; flex-shrink: 0; }
 
 /* =========================================================
+   Mobile Ticket Cards
+   ========================================================= */
+.tickets-card-view { display: none; flex-direction: column; gap: 12px; }
+.tickets-table-view { display: block; }
+
+.ticket-mobile-card {
+  display: block;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  transition: border-color 0.2s;
+  color: var(--text-main);
+}
+.ticket-mobile-card:hover { border-color: var(--primary); }
+.ticket-mobile-card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px; margin-bottom: 8px;
+}
+.ticket-mobile-desc {
+  font-size: 0.88rem; color: var(--text-muted); line-height: 1.5;
+  margin-bottom: 10px;
+}
+.ticket-mobile-meta {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+
+/* =========================================================
    AI Detail Chips (Module 1 — LLM Analysis)
    ========================================================= */
 .ai-detail-chip {
@@ -915,6 +939,20 @@ input, textarea, select { font-family: var(--font-sans); }
   .duplicate-warning { padding: 16px; }
   .duplicate-warning > div:last-child { flex-direction: column; }
   .duplicate-warning > div:last-child .btn { width: 100%; }
+
+  /* Notification panel — prevent overflow on narrow screens */
+  .notif-panel { width: calc(100vw - 32px); right: -8px; }
+
+  /* Ticket list: swap table for cards on mobile */
+  .tickets-table-view { display: none; }
+  .tickets-card-view { display: flex; }
+
+  /* Knowledge base layout */
+  .kb-layout { grid-template-columns: 1fr; }
+
+  /* GPS layout */
+  .gps-layout { grid-template-columns: 1fr; }
+  .map-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (max-width: 480px) {

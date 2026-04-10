@@ -79,6 +79,15 @@ On first launch, click **"Seed Demo Data"** on the login page, then sign in:
 - Map auto-refreshes every 30 seconds
 - Location status table below the map shows which technicians are/aren't sharing GPS
 
+### Module 9 — Mobile-Friendly UI
+- `layout.tsx` includes `<meta name="viewport">` and `<meta name="theme-color">` for proper mobile rendering
+- Sidebar transforms to a **horizontal sticky tab-bar** on screens ≤768px
+- Ticket list shows **card layout** on mobile instead of the wide data table
+- Notification panel uses `calc(100vw - 32px)` width on mobile to prevent edge overflow
+- Inputs use `font-size: 16px` to prevent iOS auto-zoom on focus
+- All primary action buttons stretch to full-width on mobile for easy touch targets
+- GPS map layout, grid sections, and analytics panels all stack to single column on small screens
+
 ---
 
 ## Project Structure
