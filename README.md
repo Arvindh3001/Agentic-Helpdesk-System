@@ -61,6 +61,15 @@ On first launch, click **"Seed Demo Data"** on the login page, then sign in:
 - Threshold: 55% — shows warning with similarity score
 - User can dismiss and submit anyway (`forceSubmit` flag)
 
+### Module 8 — Technician GPS Tracking
+- Technicians click **"📍 Share Location"** in the sidebar → browser Geolocation API captures lat/lng
+- Location saved to `TechnicianProfile.latitude / longitude / locationUpdatedAt`
+- Admin opens **Technicians → GPS Map tab** to see all technicians on an interactive OpenStreetMap
+- Map markers are colour-coded: 🟢 available, ⚫ offline
+- Popup shows: name, category, zone, workload, last updated time
+- Map auto-refreshes every 30 seconds
+- Location status table below the map shows which technicians are/aren't sharing GPS
+
 ---
 
 ## Project Structure
