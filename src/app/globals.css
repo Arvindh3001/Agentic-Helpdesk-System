@@ -787,3 +787,140 @@ input, textarea, select { font-family: var(--font-sans); }
 .notif-event-row:last-child { border-bottom: none; }
 .notif-event-icon { font-size: 1.1rem; width: 24px; text-align: center; flex-shrink: 0; }
 
+/* =========================================================
+   AI Detail Chips (Module 1 — LLM Analysis)
+   ========================================================= */
+.ai-detail-chip {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+}
+.ai-detail-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.ai-detail-value {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+/* =========================================================
+   Mobile Responsive Overrides (Module 9)
+   ========================================================= */
+@media (max-width: 768px) {
+  :root { --sidebar-width: 0px; }
+
+  .layout { flex-direction: column; height: auto; overflow: visible; }
+
+  .sidebar {
+    width: 100%;
+    flex-direction: row;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+    overflow-x: auto;
+    padding: 0;
+    z-index: 100;
+    position: sticky;
+    top: 0;
+  }
+
+  .sidebar-header { padding: 12px 16px; border-bottom: none; flex-shrink: 0; }
+  .sidebar-title, .sidebar-subtitle { display: none; }
+
+  .sidebar-nav {
+    flex-direction: row;
+    padding: 0;
+    gap: 0;
+    flex: 1;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .sidebar-nav::-webkit-scrollbar { display: none; }
+
+  .nav-item {
+    flex-direction: column;
+    gap: 2px;
+    padding: 10px 14px;
+    border-radius: 0;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    font-size: 0.7rem;
+    min-width: 60px;
+    align-items: center;
+    justify-content: center;
+  }
+  .nav-item.active { border-bottom-color: var(--primary); background: transparent; }
+  .nav-icon { font-size: 1.1rem; }
+
+  .tech-status-panel { display: none; }
+
+  .sidebar-footer {
+    padding: 8px 12px;
+    flex-shrink: 0;
+    border-top: none;
+    border-left: 1px solid var(--border-color);
+  }
+
+  .main-content { height: auto; overflow: visible; }
+  .app-header { padding: 12px 16px; }
+  .content-area { padding: 16px; overflow: visible; }
+
+  .page { padding: 0; }
+  .page-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+    padding-bottom: 16px;
+    margin-bottom: 16px;
+  }
+  .page-title { font-size: 1.3rem !important; }
+
+  .grid-4 { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .grid-3 { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .grid-2 { grid-template-columns: 1fr; }
+
+  .ticket-form-layout { grid-template-columns: 1fr; }
+  .ticket-detail-grid { grid-template-columns: 1fr; }
+
+  .tech-grid { grid-template-columns: 1fr; }
+
+  .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { min-width: 600px; }
+
+  .card { padding: 16px; border-radius: var(--radius-md); }
+
+  .btn { padding: 10px 16px; font-size: 0.85rem; }
+  .btn-primary, .btn-secondary { width: 100%; justify-content: center; }
+
+  .stats-summary-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .form-grid { gap: 16px; }
+  input, textarea, select { font-size: 16px !important; /* prevent iOS zoom */ }
+
+  .upload-zone { padding: 20px 12px; }
+
+  .ai-result-box { padding: 14px; }
+  .ai-result-box > div[style*="grid"] { grid-template-columns: 1fr; }
+
+  .duplicate-warning { padding: 16px; }
+  .duplicate-warning > div:last-child { flex-direction: column; }
+  .duplicate-warning > div:last-child .btn { width: 100%; }
+}
+
+@media (max-width: 480px) {
+  .grid-4 { grid-template-columns: 1fr; }
+  .grid-3 { grid-template-columns: 1fr; }
+  .stats-summary-grid { grid-template-columns: 1fr 1fr; }
+  .page-title { font-size: 1.15rem !important; }
+}
+

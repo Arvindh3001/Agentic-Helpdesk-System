@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,68 +8,91 @@ datasource db {
 }
 
 model User {
-  id            Int             @id @default(autoincrement())
+  id            Int               @id @default(autoincrement())
   name          String
-  email         String          @unique
+  email         String            @unique
   passwordHash  String
-  role          String          @default("Customer") // Customer, Technician, Admin
-  createdAt     DateTime        @default(now())
-  
-  technician    TechnicianProfile?
-  ticketsAsCustomer Ticket[]    @relation("CustomerTickets")
-  ticketsAsTech     Ticket[]    @relation("TechTickets")
+  role          String            @default("Customer") // Customer, Technician, Admin
+  createdAt     DateTime          @default(now())
+
+  technician        TechnicianProfile?
+  ticketsAsCustomer Ticket[]          @relation("CustomerTickets")
+  ticketsAsTech     Ticket[]          @relation("TechTickets")
 }
 
 model TechnicianProfile {
-  id               Int      @id @default(autoincrement())
-  userId           Int      @unique
-  user             User     @relation(fields: [userId], references: [id])
-  isAvailable      Boolean  @default(true)
-  currentWorkload  Int      @default(0)
-  zone             String
-  categoryId       Int
-  category         Category @relation(fields: [categoryId], references: [id])
+  id                Int       @id @default(autoincrement())
+  userId            Int       @unique
+  user              User      @relation(fields: [userId], references: [id])
+  isAvailable       Boolean   @default(true)
+  currentWorkload   Int       @default(0)
+  zone              String
+  categoryId        Int
+  category          Category  @relation(fields: [categoryId], references: [id])
+
+  // GPS Tracking (Module 8)
+  latitude          Float?
+  longitude         Float?
+  locationUpdatedAt DateTime?
 }
 
 model Category {
-  id              Int                      @id @default(autoincrement())
-  name            String                   @unique
-  Solutions       TroubleshootingSolution[]
-  Tickets         Ticket[]
-  Technicians     TechnicianProfile[]
+  id          Int                      @id @default(autoincrement())
+  name        String                   @unique
+  Solutions   TroubleshootingSolution[]
+  Tickets     Ticket[]
+  Technicians TechnicianProfile[]
 }
 
 model TroubleshootingSolution {
-  id          Int      @id @default(autoincrement())
-  categoryId  Int
-  category    Category @relation(fields: [categoryId], references: [id])
-  title       String
-  steps       String
+  id         Int      @id @default(autoincrement())
+  categoryId Int
+  category   Category @relation(fields: [categoryId], references: [id])
+  title      String
+  steps      String
 }
 
 model Ticket {
-  id              Int       @id @default(autoincrement())
-  customerId      Int
-  customer        User      @relation("CustomerTickets", fields: [customerId], references: [id])
-  categoryId      Int
-  category        Category  @relation(fields: [categoryId], references: [id])
-  description     String
-  imageUrl        String?
-  zone            String
-  status          String    @default("Pending") // Pending, Assigned, Resolved
-  priority        String    @default("Low") // Low, Medium, High
-  assignedTechId  Int?
-  assignedTech    User?     @relation("TechTickets", fields: [assignedTechId], references: [id])
-  slaDeadline     DateTime?
-  createdAt       DateTime  @default(now())
-  resolvedAt      DateTime?
-  Feedback        Feedback?
+  id          Int       @id @default(autoincrement())
+  customerId  Int
+  customer    User      @relation("CustomerTickets", fields: [customerId], references: [id])
+  categoryId  Int
+  category    Category  @relation(fields: [categoryId], references: [id])
+  description String
+  imageUrl    String?
+  zone        String
+  status      String    @default("Pending") // Pending, Assigned, Resolved
+  priority    String    @default("Low")     // Low, Medium, High
+  assignedTechId Int?
+  assignedTech   User?  @relation("TechTickets", fields: [assignedTechId], references: [id])
+  slaDeadline    DateTime?
+  createdAt      DateTime  @default(now())
+  resolvedAt     DateTime?
+
+  // Module 1 – LLM Complaint Understanding
+  aiSummary         String?
+  aiCategory        String?
+  aiPriority        String?
+  aiLocation        String?
+  aiTroubleshooting String?   // JSON-encoded string[]
+
+  // Module 2 – Image / YOLO Detection
+  imageDetectedObject    String?
+  imageConfidence        Float?
+  imagePredictedCategory String?
+
+  // Module 4 – Duplicate Detection
+  isDuplicate   Boolean @default(false)
+  duplicateOfId Int?
+
+  Feedback Feedback?
 }
 
 model Feedback {
-  id        Int      @id @default(autoincrement())
-  ticketId  Int      @unique
-  ticket    Ticket   @relation(fields: [ticketId], references: [id])
+  id        Int     @id @default(autoincrement())
+  ticketId  Int     @unique
+  ticket    Ticket  @relation(fields: [ticketId], references: [id])
   rating    Int
   comments  String?
+  createdAt DateTime @default(now())
 }
