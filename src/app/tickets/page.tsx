@@ -56,9 +56,7 @@ export default function TicketsPage() {
           <h1 className="page-title">Ticket Dashboard</h1>
           <p className="page-subtitle">Manage and track all support tickets</p>
         </div>
-        {(user?.role === 'Customer' || user?.role === 'Admin') && (
-          <Link href="/tickets/new" className="btn btn-primary">➕ New Ticket</Link>
-        )}
+        <Link href="/tickets/new" className="btn btn-primary">➕ New Ticket</Link>
       </div>
 
       <div className="filter-bar">

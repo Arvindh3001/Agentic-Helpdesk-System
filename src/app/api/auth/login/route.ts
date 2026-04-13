@@ -4,16 +4,21 @@ import { hashPassword } from '@/lib/auth'
 import { cookies } from 'next/headers'
 
 export async function POST(req: NextRequest) {
-  const { email, password } = await req.json()
-  if (!email || !password) {
-    return NextResponse.json({ error: 'Email and password required' }, { status: 400 })
+  try {
+    const { email, password } = await req.json()
+    if (!email || !password) {
+      return NextResponse.json({ error: 'Email and password required' }, { status: 400 })
+    }
+    const hashed = hashPassword(password)
+    const user = await prisma.user.findFirst({ where: { email, passwordHash: hashed } })
+    if (!user) {
+      return NextResponse.json({ error: 'Invalid credentials — check email/password or seed demo data first' }, { status: 401 })
+    }
+    const cookieStore = await cookies()
+    cookieStore.set('session_user_id', String(user.id), { httpOnly: true, path: '/', maxAge: 60 * 60 * 24 * 7 })
+    return NextResponse.json({ id: user.id, name: user.name, email: user.email, role: user.role })
+  } catch (error) {
+    console.error('Login error:', error)
+    return NextResponse.json({ error: 'Server error — make sure the database is set up (run: npx prisma db push)' }, { status: 500 })
   }
-  const hashed = hashPassword(password)
-  const user = await prisma.user.findFirst({ where: { email, passwordHash: hashed } })
-  if (!user) {
-    return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
-  }
-  const cookieStore = await cookies()
-  cookieStore.set('session_user_id', String(user.id), { httpOnly: true, path: '/', maxAge: 60 * 60 * 24 * 7 })
-  return NextResponse.json({ id: user.id, name: user.name, email: user.email, role: user.role })
 }

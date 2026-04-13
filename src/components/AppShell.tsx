@@ -27,11 +27,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <div></div>
           <div className="app-header-right">
             <NotificationBell />
-            {(user.role === 'Customer' || user.role === 'Admin') && (
-              <Link href="/tickets/new" className="btn btn-primary" style={{ fontSize: '0.85rem', padding: '8px 14px' }}>
-                ➕ New Ticket
-              </Link>
-            )}
+            <Link href="/tickets/new" className="btn btn-primary" style={{ fontSize: '0.85rem', padding: '8px 14px' }}>
+              ➕ New Ticket
+            </Link>
           </div>
         </header>
         <div className="content-area">{children}</div>

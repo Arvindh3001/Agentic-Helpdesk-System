@@ -3,6 +3,15 @@ import { useEffect, useState, use } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 
+interface WaLog {
+  id: number
+  type: string
+  status: string
+  toPhone: string
+  createdAt: string
+  error: string | null
+}
+
 interface Ticket {
   id: number
   description: string
@@ -17,6 +26,7 @@ interface Ticket {
   customer: { name: string; email: string }
   assignedTech?: { name: string; email: string }
   Feedback?: { rating: number; comments: string }
+  WhatsAppLogs?: WaLog[]
   // AI fields
   aiSummary: string | null
   aiCategory: string | null
@@ -299,7 +309,7 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
           </div>
 
           {ticket.duplicateOfId && (
-            <div className="card" style={{ borderColor: 'rgba(245,158,11,0.3)', background: 'rgba(245,158,11,0.05)' }}>
+            <div className="card" style={{ borderColor: 'rgba(245,158,11,0.3)', background: 'rgba(245,158,11,0.05)', marginBottom: '16px' }}>
               <h4 style={{ marginBottom: '12px', color: '#f59e0b' }}>⚠️ Duplicate of</h4>
               <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
                 This ticket is similar to{' '}
@@ -307,6 +317,41 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
                   Ticket #{ticket.duplicateOfId}
                 </a>
               </p>
+            </div>
+          )}
+
+          {/* WhatsApp Notification Log */}
+          {ticket.WhatsAppLogs && ticket.WhatsAppLogs.length > 0 && (
+            <div className="card">
+              <h4 style={{ marginBottom: '14px', color: 'var(--text-muted)', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                💬 WHATSAPP NOTIFICATIONS
+              </h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {ticket.WhatsAppLogs.map(log => {
+                  const typeLabel: Record<string, string> = {
+                    TICKET_SUBMITTED: '🎫 Submitted',
+                    TECH_ASSIGNED:    '🔧 Assigned',
+                    TICKET_RESOLVED:  '✅ Resolved',
+                    FEEDBACK_REQUEST: '⭐ Feedback',
+                  }
+                  return (
+                    <div key={log.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', padding: '8px 10px', background: 'var(--bg-dark-2)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                      <div>
+                        <p style={{ fontSize: '0.8rem', fontWeight: 600 }}>{typeLabel[log.type] || log.type}</p>
+                        <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{new Date(log.createdAt).toLocaleString()}</p>
+                      </div>
+                      <span style={{
+                        background: log.status === 'sent' ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.12)',
+                        color: log.status === 'sent' ? '#22c55e' : '#ef4444',
+                        border: `1px solid ${log.status === 'sent' ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}`,
+                        borderRadius: '99px', padding: '2px 8px', fontSize: '0.72rem', fontWeight: 700,
+                      }}>
+                        {log.status === 'sent' ? '✅ Sent' : '❌ Failed'}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
             </div>
           )}
         </div>

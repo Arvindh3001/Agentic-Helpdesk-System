@@ -10,8 +10,9 @@ const navItems = [
   { href: '/knowledge',       label: 'Knowledge',   icon: '📚', roles: ['Admin', 'Technician', 'Customer'] },
   { href: '/technicians',     label: 'Technicians', icon: '⚙️', roles: ['Admin'] },
   { href: '/analytics',       label: 'Analytics',   icon: '📈', roles: ['Admin', 'Technician'] },
-  { href: '/admin/feedback',  label: 'Feedback',    icon: '⭐', roles: ['Admin'] },
-  { href: '/future',          label: 'AI & Future', icon: '🚀', roles: ['Admin', 'Technician', 'Customer'] },
+  { href: '/admin/feedback',      label: 'Feedback',      icon: '⭐', roles: ['Admin'] },
+  { href: '/admin/notifications', label: 'Notifications', icon: '💬', roles: ['Admin'] },
+  { href: '/future',              label: 'AI & Future',   icon: '🚀', roles: ['Admin', 'Technician', 'Customer'] },
 ]
 
 export default function Sidebar() {

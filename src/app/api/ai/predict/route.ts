@@ -13,6 +13,6 @@ export async function POST(req: NextRequest) {
   if (!description || typeof description !== 'string') {
     return NextResponse.json({ error: 'description required' }, { status: 400 })
   }
-  const result = analyzeComplaintWithLLM(description)
+  const result = await analyzeComplaintWithLLM(description)
   return NextResponse.json(result)
 }

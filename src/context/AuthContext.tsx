@@ -42,15 +42,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => { refresh() }, [refresh])
 
   const login = async (email: string, password: string) => {
-    const res = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    })
-    const data = await res.json()
-    if (!res.ok) return { error: data.error || 'Login failed' }
-    setUser(data)
-    return {}
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      })
+      const data = await res.json()
+      if (!res.ok) return { error: data.error || 'Login failed' }
+      setUser(data)
+      return {}
+    } catch {
+      return { error: 'Cannot connect to server. Make sure the app is running.' }
+    }
   }
 
   const logout = async () => {

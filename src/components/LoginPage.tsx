@@ -101,7 +101,7 @@ export default function LoginPage() {
         <div className="demo-creds">
           <p><strong>Admin:</strong> arvindh3001@gmail.com / password123</p>
           <p><strong>Tech:</strong> arjun.sharma@helpdesk.com / password123</p>
-          <p><strong>User:</strong> priya.sharma@helpdesk.com / password123</p>
+          <p><strong>User:</strong> arvindh3001+customer@gmail.com / password123</p>
         </div>
       </div>
     </div>

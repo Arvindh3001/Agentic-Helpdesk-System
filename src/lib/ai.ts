@@ -1,7 +1,7 @@
 import { prisma } from './prisma'
 
 // ─────────────────────────────────────────────
-// CATEGORY / KEYWORD RULES (shared reference)
+// CATEGORY / KEYWORD RULES (fallback reference)
 // ─────────────────────────────────────────────
 const CATEGORY_RULES: { category: string; keywords: string[]; troubleshooting: string[] }[] = [
   {
@@ -110,19 +110,47 @@ const ZONE_PATTERNS: Record<string, string[]> = {
 }
 
 // ─────────────────────────────────────────────
-// MODULE 1 – LLM COMPLAINT UNDERSTANDING
-// Rule-based fallback; swap client.chat() call in here when an API key is available.
+// GROQ LLM CALL
 // ─────────────────────────────────────────────
-export function analyzeComplaintWithLLM(text: string): {
-  category: string
-  priority: string
-  location: string
-  summary: string
-  troubleshooting: string[]
-} {
+async function callGroq(prompt: string): Promise<string | null> {
+  const apiKey = process.env.GROQ_API_KEY
+  if (!apiKey || apiKey === 'your_groq_api_key_here') return null
+
+  try {
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'llama-3.1-8b-instant',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are an AI assistant for a campus helpdesk system. Always respond with valid JSON only. No markdown, no explanation.',
+          },
+          { role: 'user', content: prompt },
+        ],
+        temperature: 0.2,
+        max_tokens: 500,
+      }),
+    })
+
+    if (!res.ok) return null
+    const data = await res.json()
+    return data.choices?.[0]?.message?.content ?? null
+  } catch {
+    return null
+  }
+}
+
+// ─────────────────────────────────────────────
+// RULE-BASED FALLBACK
+// ─────────────────────────────────────────────
+function analyzeWithRules(text: string) {
   const lower = text.toLowerCase()
 
-  // Detect category
   let category = ''
   let troubleshooting: string[] = []
   for (const rule of CATEGORY_RULES) {
@@ -133,38 +161,81 @@ export function analyzeComplaintWithLLM(text: string): {
     }
   }
 
-  // Detect priority
   let priority = 'Low'
   if (PRIORITY_HIGH_KEYWORDS.some(kw => lower.includes(kw))) priority = 'High'
   else if (PRIORITY_MEDIUM_KEYWORDS.some(kw => lower.includes(kw))) priority = 'Medium'
 
-  // Detect location / zone from text
   let location = ''
   for (const [zone, patterns] of Object.entries(ZONE_PATTERNS)) {
     if (patterns.some(p => lower.includes(p))) { location = zone; break }
   }
 
-  // Generate summary: first sentence or first 120 chars
   const firstSentence = text.split(/[.!?]/)[0].trim()
-  const summary = firstSentence.length > 10
-    ? firstSentence.slice(0, 120)
-    : text.slice(0, 120)
+  const summary = firstSentence.length > 10 ? firstSentence.slice(0, 120) : text.slice(0, 120)
 
   return { category, priority, location, summary, troubleshooting }
+}
+
+// ─────────────────────────────────────────────
+// MODULE 1 – LLM COMPLAINT UNDERSTANDING (Groq + fallback)
+// ─────────────────────────────────────────────
+export async function analyzeComplaintWithLLM(text: string): Promise<{
+  category: string
+  priority: string
+  location: string
+  summary: string
+  troubleshooting: string[]
+}> {
+  const validCategories = CATEGORY_RULES.map(r => r.category).join(' | ')
+  const validZones = Object.keys(ZONE_PATTERNS).join(' | ')
+
+  const prompt = `Analyze this campus helpdesk complaint and return JSON.
+
+Complaint: "${text}"
+
+Return ONLY this JSON (no other text):
+{
+  "category": "<one of: ${validCategories}, or empty string if unclear>",
+  "priority": "<High | Medium | Low>",
+  "location": "<one of: ${validZones}, or empty string if not mentioned>",
+  "summary": "<1-2 sentence plain English summary of the issue>",
+  "troubleshooting": ["<step 1>", "<step 2>", "<step 3>"]
+}
+
+Priority rules: High = urgent/emergency/not working at all. Medium = degraded/slow/damaged. Low = minor/cosmetic.`
+
+  const raw = await callGroq(prompt)
+
+  if (raw) {
+    try {
+      // Extract JSON from response (handle any extra text)
+      const jsonMatch = raw.match(/\{[\s\S]*\}/)
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0])
+        if (parsed.category !== undefined && parsed.priority && parsed.summary) {
+          return {
+            category: parsed.category || '',
+            priority: parsed.priority || 'Low',
+            location: parsed.location || '',
+            summary: parsed.summary || '',
+            troubleshooting: Array.isArray(parsed.troubleshooting) ? parsed.troubleshooting : [],
+          }
+        }
+      }
+    } catch { /* fall through to rule-based */ }
+  }
+
+  // Fallback: rule-based
+  return analyzeWithRules(text)
 }
 
 // ─────────────────────────────────────────────
 // MODULE 3 – COMPLAINT SUMMARIZATION
 // ─────────────────────────────────────────────
 export function summarizeComplaint(text: string): string {
-  // Extract key nouns / actions using simple heuristic
   const sentences = text.split(/[.!?]/).map(s => s.trim()).filter(Boolean)
   if (sentences.length === 0) return text.slice(0, 100)
-
-  // Take up to 2 sentences; collapse whitespace
   const core = sentences.slice(0, 2).join('. ').replace(/\s+/g, ' ').trim()
-
-  // Capitalise and append period
   const capped = core.charAt(0).toUpperCase() + core.slice(1)
   return capped.endsWith('.') ? capped : capped + '.'
 }
@@ -197,15 +268,33 @@ function jaccardSimilarity(a: string, b: string): number {
 
 export function detectDuplicateComplaint(
   newText: string,
-  existing: { id: number; description: string }[],
-  threshold = 0.55,
+  existing: { id: number; description: string; categoryId?: number; zone?: string }[],
+  context: { categoryId?: number; zone?: string } = {},
 ): { isDuplicate: boolean; matchedTicketId?: number; similarityScore?: number } {
-  let best = { id: -1, score: 0 }
+  // Same-category/zone duplicates are detected at a lower text-similarity bar
+  // because two short complaints about the same place/type are almost certainly the same issue.
+  const HIGH_THRESHOLD = 0.55   // different category or no context — strong text match required
+  const LOW_THRESHOLD  = 0.30   // same category AND same zone — loose text match is enough
+
+  let best = { id: -1, score: 0, threshold: HIGH_THRESHOLD }
+
   for (const ticket of existing) {
-    const score = jaccardSimilarity(newText, ticket.description)
-    if (score > best.score) best = { id: ticket.id, score }
+    const textScore = jaccardSimilarity(newText, ticket.description)
+
+    const sameCategory = context.categoryId !== undefined && ticket.categoryId === context.categoryId
+    const sameZone     = context.zone !== undefined && ticket.zone === context.zone
+    const effectiveThreshold = (sameCategory && sameZone)
+      ? LOW_THRESHOLD
+      : sameCategory
+        ? (HIGH_THRESHOLD + LOW_THRESHOLD) / 2   // 0.425 — same category, different zone
+        : HIGH_THRESHOLD
+
+    if (textScore > best.score) {
+      best = { id: ticket.id, score: textScore, threshold: effectiveThreshold }
+    }
   }
-  if (best.score >= threshold) {
+
+  if (best.score >= best.threshold) {
     return { isDuplicate: true, matchedTicketId: best.id, similarityScore: Math.round(best.score * 100) / 100 }
   }
   return { isDuplicate: false }
@@ -234,7 +323,6 @@ export async function analyzeImage(filename: string): Promise<{
     { keywords: ['trash','garbage','waste','clean','dirty','mess','washroom','toilet'], detectedObject: 'Waste / Hygiene Item', label: 'Housekeeping Issue Detected', category: 'Cleaning / Housekeeping', confidence: 0.78, suggestions: ['Waste overflow','Dirty area','Washroom issue'] },
   ]
 
-  // Simulate processing delay
   await new Promise(resolve => setTimeout(resolve, 800))
 
   for (const rule of rules) {
@@ -253,7 +341,7 @@ export async function analyzeImage(filename: string): Promise<{
 }
 
 // ─────────────────────────────────────────────
-// Predictive Maintenance Alerts (existing feature)
+// Predictive Maintenance Alerts
 // ─────────────────────────────────────────────
 export async function getPredictiveAlerts() {
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)

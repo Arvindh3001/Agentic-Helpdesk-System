@@ -13,6 +13,7 @@ model User {
   email         String            @unique
   passwordHash  String
   role          String            @default("Customer") // Customer, Technician, Admin
+  phone         String?           // WhatsApp number with country code e.g. +919876543210
   createdAt     DateTime          @default(now())
 
   technician        TechnicianProfile?
@@ -74,7 +75,7 @@ model Ticket {
   aiCategory        String?
   aiPriority        String?
   aiLocation        String?
-  aiTroubleshooting String?   // JSON-encoded string[]
+  aiTroubleshooting String?
 
   // Module 2 – Image / YOLO Detection
   imageDetectedObject    String?
@@ -85,7 +86,8 @@ model Ticket {
   isDuplicate   Boolean @default(false)
   duplicateOfId Int?
 
-  Feedback Feedback?
+  Feedback      Feedback?
+  WhatsAppLogs  WhatsAppLog[]
 }
 
 model Feedback {
@@ -94,5 +96,19 @@ model Feedback {
   ticket    Ticket  @relation(fields: [ticketId], references: [id])
   rating    Int
   comments  String?
+  createdAt DateTime @default(now())
+}
+
+// WhatsApp Notification Log (Module 10)
+model WhatsAppLog {
+  id        Int      @id @default(autoincrement())
+  ticketId  Int
+  ticket    Ticket   @relation(fields: [ticketId], references: [id])
+  toPhone   String
+  toName    String
+  message   String
+  type      String   // TICKET_SUBMITTED | TECH_ASSIGNED | TICKET_RESOLVED | FEEDBACK_REQUEST
+  status    String   // sent | failed
+  error     String?
   createdAt DateTime @default(now())
 }

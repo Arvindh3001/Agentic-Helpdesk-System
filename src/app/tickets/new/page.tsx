@@ -67,13 +67,13 @@ export default function NewTicketPage() {
       })
       const data = await res.json()
       setAiLLMResult(data)
-      // Auto-fill zone if detected
-      if (data.location && !form.zone) {
+      // Always sync zone from AI (user can still override manually)
+      if (data.location && zones.includes(data.location)) {
         setForm(prev => ({ ...prev, zone: data.location }))
         setDetectedZone(data.location)
       }
-      // Auto-select category if detected and none chosen
-      if (data.category && !form.categoryId) {
+      // Always sync category from AI
+      if (data.category) {
         const matched = categories.find(c => c.name === data.category)
         if (matched) {
           setForm(prev => ({ ...prev, categoryId: String(matched.id) }))

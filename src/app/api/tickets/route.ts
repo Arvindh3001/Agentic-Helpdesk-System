@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getSession, predictPriority, calculateSlaDeadline } from '@/lib/auth'
 import { sendTicketCreatedEmail } from '@/lib/email'
 import { analyzeComplaintWithLLM, summarizeComplaint, detectDuplicateComplaint } from '@/lib/ai'
+import { sendWhatsAppNotification } from '@/lib/whatsapp'
 import { writeFile, mkdir } from 'fs/promises'
 import path from 'path'
 
@@ -69,7 +70,7 @@ export async function POST(req: NextRequest) {
   }
 
   // ── LLM COMPLAINT ANALYSIS ───────────────────────────────────────────────
-  const llmResult = analyzeComplaintWithLLM(description)
+  const llmResult = await analyzeComplaintWithLLM(description)
   const aiSummary = summarizeComplaint(description)
 
   // ── DUPLICATE DETECTION ──────────────────────────────────────────────────
@@ -82,10 +83,10 @@ export async function POST(req: NextRequest) {
         createdAt: { gte: yesterday },
         status: { in: ['Pending', 'Assigned'] },
       },
-      select: { id: true, description: true, category: true },
+      select: { id: true, description: true, category: true, categoryId: true, zone: true },
     })
 
-    const dupResult = detectDuplicateComplaint(description, recentTickets)
+    const dupResult = detectDuplicateComplaint(description, recentTickets, { categoryId, zone })
     if (dupResult.isDuplicate && dupResult.matchedTicketId) {
       const matched = recentTickets.find(t => t.id === dupResult.matchedTicketId)
       return NextResponse.json(
@@ -172,6 +173,23 @@ export async function POST(req: NextRequest) {
         slaDeadline: ticket.slaDeadline || undefined,
       })
     } catch { /* email failure does not block ticket creation */ }
+  }
+
+  // Send WhatsApp notifications (non-blocking)
+  const customerPhone = (await prisma.user.findUnique({ where: { id: user.id }, select: { phone: true } }))?.phone
+  if (customerPhone) {
+    // Ticket submitted
+    sendWhatsAppNotification('TICKET_SUBMITTED', ticket.id, customerPhone, user.name, {
+      category: ticket.category.name,
+      priority: ticket.priority,
+    }).catch(() => {})
+
+    // If already assigned, also send tech-assigned notification
+    if (ticket.status === 'Assigned' && techProfile) {
+      sendWhatsAppNotification('TECH_ASSIGNED', ticket.id, customerPhone, user.name, {
+        techName: techProfile.user.name,
+      }).catch(() => {})
+    }
   }
 
   return NextResponse.json(ticket)
